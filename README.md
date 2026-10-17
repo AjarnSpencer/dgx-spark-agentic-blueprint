@@ -14,7 +14,7 @@ Across the global AI creator community, early adopters invested in the **NVIDIA 
 flowchart TD
     A["Creator acquires NVIDIA DGX Spark<br/>(128GB Unified Memory / GB10 ARM64)"] --> B["Expects plug-and-play desktop PC experience"]
     B --> C1["Trap 1: x86 Emulation Crashes<br/>(Box64 throws SIGABRT on AppImages)"]
-    B --> C2["Trap 2: Ubuntu 26 Release Upgrade Trap<br/>(do-release-upgrade bricks GB10 kernel modules)"]
+    B --> C2["Trap 2: Premature OS Upgrades<br/>(do-release-upgrade breaks out-of-tree GB10 drivers)"]
     B --> C3["Trap 3: App Center 'Eating Its Own Tail'<br/>(Snap refresh locks itself out)"]
     B --> C4["Trap 4: Silent Daemon Deaths<br/>(nohup/tmux dies -> desktop shortcuts lead to dead localhost)"]
     B --> C5["Trap 5: Storage Duplication<br/>(Duplicate 50GB GGUFs across runtimes)"]
@@ -32,8 +32,8 @@ flowchart TD
 ### The 6 Classic Traps & Misconceptions:
 1. **The "ARM64 / x86 Translation Trap":**  
    Creators attempted to run standard Linux AppImages (e.g. LM Studio, custom Electron apps). When run via translation layers (`box64`), they instantly threw `SIGABRT` due to unsupported syscalls and missing x86 libraries. Flawed AI assistants declared: *"LM Studio has no GUI on ARM64 and is incompatible with DGX Spark."* **This was completely false.** LM Studio maintains official native ARM64 Linux builds.
-2. **The "Ubuntu 26 Release Upgrade Trap":**  
-   Ubuntu's default `Prompt=lts` prompted users to upgrade to Ubuntu 26 (`resolute`). When triggered, the distribution upgrade severed NVIDIA's proprietary Grace Blackwell GB10 kernel modules and CUDA 13 drivers, risking an unbootable or headless state.
+2. **The "Premature OS Upgrade Trap":**  
+   Ubuntu's default `Prompt=lts` prompted users to upgrade to unvalidated Ubuntu releases (e.g. Ubuntu 26 `resolute`). Prematurely triggering distribution upgrades de-synchronizes NVIDIA's out-of-tree Grace Blackwell GB10 DKMS kernel modules and CUDA 13 drivers before vendor packages exist. Routine security updates within Ubuntu 24.04 LTS Noble must remain active, while major distribution version jumps should be locked until officially certified by NVIDIA.
 3. **The "Ouroboros / Eating Your Own Tail Trap":**  
    The Ubuntu App Center (`snap-store`) showed updates for itself in its own GUI. Clicking "Update" caused `snapd` to hang because the app cannot modify its own open files while actively executing.
 4. **The "VRAM Ceiling vs. Unified Memory Misconception":**  
@@ -51,12 +51,12 @@ Rather than constructing a brittle, bloated software wrapper that requires const
 
 1. **Agent-Agnostic Design:**  
    Whether you use **Google Antigravity**, **OpenAI Codex**, **OpenClaw**, **Claude Code**, or a local CLI coding agent, you can feed it the [`MASTER_SYSADMIN_PROMPT.md`](./MASTER_SYSADMIN_PROMPT.md).
-2. **Instant System Administrator:**  
-   The prompt instantly equips the agentic AI with the 9 Core Invariants of the DGX Spark architecture, turning it into a battle-tested system administrator that understands ARM64, GB10 CUDA 13, isolated virtual environments, systemd user daemons, and zero-duplication storage.
-3. **Transparent & Reproducible:**  
-   Every action is an atomic, verified shell command or configuration change that you can inspect, audit, and understand.
-4. **Dynamic Discovery over Hardcoded Assumptions:**  
+2. **Pre-Execution Approval Barrier:**  
+   The prompt grants the AI administrative *execution capability* within the user's shell, but strictly establishes that the human user governs all consequential changes. Privileged commands (`sudo`), package mutations, OS configurations, and network exposures require explicit user confirmation.
+3. **Dynamic Discovery over Hardcoded Assumptions:**  
    The blueprint originates from a verified, physical reference setup on Grace Blackwell GB10 hardware, but the prompt enforces dynamic target-machine discovery (`id -un`, `$HOME`, GPU state, ports) and uses systemd `%h` specifiers so it automatically adapts to any user environment without hardcoded paths.
+4. **Transparent & Reproducible:**  
+   Every action is an atomic, verified shell command or configuration change that you can inspect, audit, and understand.
 
 ---
 
@@ -65,14 +65,14 @@ Rather than constructing a brittle, bloated software wrapper that requires const
 | Invariant | Problem Solved | Correct Sovereign Practice |
 | :--- | :--- | :--- |
 | **1. ARM64 Native Primacy** | Avoids `SIGABRT` crashes from `box64` emulation. | Always deploy native `aarch64` binaries (e.g. native LM Studio ARM64 AppImage & `llmster`). |
-| **2. OS Distribution Lock** | Prevents breaking GB10 kernel modules via `do-release-upgrade`. | Set `Prompt=never` in `/etc/update-manager/release-upgrades`. Pin to Ubuntu 24.04 LTS (Noble). |
+| **2. Platform-Aware OS Maintenance** | Prevents breaking GB10 kernel drivers via uncertified upgrades. | Keep 24.04 LTS updates active. Set `Prompt=never` in `/etc/update-manager/release-upgrades` (backup first). |
 | **3. Workspace & Venv Isolation** | Prevents global Python collisions and home directory pollution. | Strict folder layout: `~/ai-workspace/{apps,environments,models,scripts}`. Never use system Python. |
 | **4. Persistent Systemd Daemons** | Eliminates dead localhost ports from killed `nohup` jobs. | All services run under `~/.config/systemd/user/` with `loginctl enable-linger $USER` active. |
-| **5. Zero-Duplication Storage** | Prevents filling NVMe storage with duplicate 50GB checkpoints. | Store master checkpoints in `~/ai-workspace/models/` and symlink via `lms import -l` or Modelfiles. |
+| **5. Model Storage Verification** | Prevents duplicate 50GB checkpoints and broken links. | Store master checkpoints in `~/ai-workspace/models/`, link via `lms import -l`, and verify disk usage. |
 | **6. Hardware-Aware Generative Media** | Prevents memory bus thrashing during video diffusion. | Apply the 5 Acceleration Levers: Scaled FP8, Step Distillation LoRA, `--highvram`, native latents. |
 | **7. Sovereign Voice & Audio DSP** | Avoids low-quality TTS and robotic prosody. | Zero-shot flow matching (F5-TTS/RVC v2), automated plosive detection, and 8-stage Dolby Broadcast DSP. |
-| **8. Container-Host Bridge** | Resolves Docker UIs failing to reach host LLM endpoints. | Bind host AI daemons to `0.0.0.0` or configure `host.docker.internal:host-gateway`. |
-| **9. Plain-Text Accessibility** | Prevents users with ADHD or busy workflows from getting locked out. | Place permanent credential files (e.g. `LIBRECHAT_LOGIN.txt`) directly on `~/Desktop/`. |
+| **8. Scoped Container Networking** | Prevents unnecessary network exposure of unauthenticated APIs. | Default to `127.0.0.1`. Use Docker bridge IP (`172.17.0.1`) or host-gateway for container frontends. |
+| **9. Accessible & Secure Ergonomics** | Prevents lockouts while maintaining security boundaries. | Verified 1-click desktop shortcuts. Restrict credentials with `chmod 600` if stored on single-user workstations. |
 
 ---
 
@@ -168,14 +168,14 @@ Open your agentic assistant (**Google Antigravity**, **Claude Code**, **OpenClaw
 ### Step 3: Run Modular Sub-Commands
 Command your AI agent using intuitive sub-commands:
 
-* **`/audit`** — Runs a comprehensive telemetry check across the GB10 GPU, 128GB unified memory pool, active listening ports, and enabled systemd user services.
-* **`/lock-os`** — Permanently locks Ubuntu against accidental distribution upgrades (`resolute` / Ubuntu 26) to preserve NVIDIA Blackwell drivers.
-* **`/setup-workspace-hierarchy`** — Scaffolds canonical `~/ai-workspace/` folders and model asset categories.
-* **`/install-system-dependencies`** — Installs required APT packages for media, audio DSP, and OCR.
+* **`/audit`** — Runs a comprehensive telemetry check across the GB10 GPU, 128GB unified memory pool, active virtual environments, listening ports, and enabled systemd user services with live GPU tensor verification.
+* **`/lock-os`** — Safely configures Ubuntu release-upgrade policy (with automated backup) to preserve NVIDIA Blackwell drivers while retaining LTS package updates.
+* **`/setup-workspace-hierarchy`** — Scaffolds canonical `~/ai-workspace/` folders and model asset categories using dynamic `$HOME` paths.
+* **`/install-system-dependencies`** — Installs required APT packages for media, audio DSP, and OCR after presenting package list for approval.
 * **`/install-lmstudio-gui`** — Downloads and configures the official native ARM64 LM Studio AppImage on the desktop.
-* **`/enable-llmster`** — Configures the headless `llmster` engine as an enabled systemd user service listening on `0.0.0.0:1234`.
-* **`/symlink-models`** — Scans existing GGUF models and links them into LM Studio with zero disk duplication.
-* **`/deploy-librechat`** — Deploys the sovereign LibreChat multi-model chat UI with persistent 10-year login sessions and auto-generated desktop login cheat sheets.
+* **`/enable-llmster`** — Configures the headless `llmster` engine as an enabled systemd user service with loopback (`127.0.0.1:1234`) or scoped Docker bridge binding.
+* **`/symlink-models`** — Scans existing GGUF models, links them into LM Studio, and verifies symlink integrity and disk space savings.
+* **`/deploy-librechat`** — Deploys the sovereign LibreChat multi-model chat UI with configurable session lifetimes and optional restricted desktop login cheat sheets.
 * **`/deploy-comfyui-video`** — Deploys ComfyUI with Wan 2.1 14B Scaled FP8, Lightx2v LoRA, and unified memory flags on `:8188`.
 * **`/deploy-tts-audio-suite`** — Deploys F5-TTS, RVC v2, and Dolby Broadcast DSP mastering in `tts-env`.
 * **`/deploy-ocr-suite`** — Deploys Docling, ColPali, and Tesseract 5 LSTM tools in `docling-env`.
@@ -195,21 +195,21 @@ flowchart LR
     Browser -->|Port 7897| RVC["RVC v2 Voice Conversion"]
     Browser -->|Port 7865| RAGStudio["RAG Studio Document Workbench"]
 
-    LibreChat -->|host.docker.internal:11434| Ollama
-    LibreChat -->|host.docker.internal:1234| LMStudio
+    LibreChat -->|host.docker.internal / 172.17.0.1:11434| Ollama
+    LibreChat -->|host.docker.internal / 172.17.0.1:1234| LMStudio
 ```
 
-| Service | Port | Protocol | Interface Type | Description |
+| Service | Port | Default Interface | Protocol | Description |
 | :--- | :--- | :--- | :--- | :--- |
-| **LM Studio (llmster)** | `1234` | HTTP / REST | OpenAI-Compatible API | Headless native ARM64 inference engine on GB10 GPU |
-| **LM Studio GUI** | Desktop | AppImage | Native Linux ARM64 Window | Official visual model explorer and chat GUI |
-| **LibreChat** | `3080` | HTTP / Web | Web Application (Docker) | Sovereign multi-model chat interface with saved history |
-| **Ollama** | `11434` | HTTP / REST | Local Engine | Multi-model background LLM runner |
-| **ComfyUI** | `8188` | HTTP / Web | Node-Based WebUI | Local video & image diffusion (Wan 2.1 14B / FLUX.1) |
-| **F5-TTS** | `7860` | HTTP / Web | Gradio WebUI | Zero-shot neural voice cloning & speech synthesis |
-| **RVC v2** | `7897` | HTTP / Web | Gradio WebUI | Retrieval-based voice conversion and vocal model training |
-| **RAG Studio** | `7865` | HTTP / Web | Gradio WebUI | Local document RAG and contextual chat workbench |
-| **DGX AI Master Hub** | `8000` | HTTP / Web | Dashboard | 1-Click launcher for all local AI endpoints |
+| **LM Studio (llmster)** | `1234` | `127.0.0.1` (or `172.17.0.1`) | HTTP / REST | Headless native ARM64 inference engine on GB10 GPU |
+| **LM Studio GUI** | Desktop | Native Window | AppImage | Official visual model explorer and chat GUI |
+| **LibreChat** | `3080` | `127.0.0.1` / Localhost | HTTP / Web | Sovereign multi-model chat interface with saved history |
+| **Ollama** | `11434` | `127.0.0.1` (or `172.17.0.1`) | HTTP / REST | Multi-model background LLM runner |
+| **ComfyUI** | `8188` | `127.0.0.1` | HTTP / Web | Local video & image diffusion (Wan 2.1 14B / FLUX.1) |
+| **F5-TTS** | `7860` | `127.0.0.1` | Gradio WebUI | Zero-shot neural voice cloning & speech synthesis |
+| **RVC v2** | `7897` | `127.0.0.1` | Gradio WebUI | Retrieval-based voice conversion and vocal model training |
+| **RAG Studio** | `7865` | `127.0.0.1` | Gradio WebUI | Local document RAG and contextual chat workbench |
+| **DGX AI Master Hub** | `8000` | `127.0.0.1` | Dashboard | 1-Click launcher for all local AI endpoints |
 
 ---
 
