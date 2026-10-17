@@ -71,7 +71,7 @@ Rather than constructing a brittle, bloated software wrapper that requires const
 
 ### Step 1: Clone This Repository
 ```bash
-git clone https://github.com/YourUsername/dgx-spark-agentic-blueprint.git ~/ai-workspace/apps/dgx-spark-agentic-blueprint
+git clone https://github.com/AjarnSpencer/dgx-spark-agentic-blueprint.git ~/ai-workspace/apps/dgx-spark-agentic-blueprint
 cd ~/ai-workspace/apps/dgx-spark-agentic-blueprint
 ```
 
