@@ -220,8 +220,18 @@ For creators scaling into enterprise inference and training:
 
 ---
 
-## 10. License & Credits
+## 10. Community Evolution & Collaboration
+
+This repository is built by and for the open-source community to continuously evolve sovereign AI practices on the NVIDIA DGX Spark.
+
+* **Collaborators Welcome:** We actively invite developers, AI researchers, and DGX Spark early adopters to join as collaborators. If you are developing and testing models on GB10 hardware, we welcome your PRs, benchmark results, and sub-command recipes!
+* **Contribution Guidelines:** See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution workflows, code standards, and how to propose new sub-commands.
+* **Issues & Discussions:** Have an issue, discovered a new upstream bug, or found an optimization lever? Open an Issue on GitHub to collaborate with the community.
+
+---
+
+## 11. License & Credits
 
 * **Standard Origin & Architectural Design:** Ajarn Spencer Littlewood ([www.ajarnspencer.com](https://www.ajarnspencer.com) | [GitHub](https://www.github.com/AjarnSpencer))
-* **License:** MIT License. Free for all creators, researchers, and developers.
+* **License:** [MIT License](./LICENSE). Free for all creators, researchers, and developers.
 * **Hardware Support:** Dedicated to the NVIDIA DGX Spark community.
