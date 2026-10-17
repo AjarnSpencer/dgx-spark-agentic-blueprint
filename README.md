@@ -55,6 +55,8 @@ Rather than constructing a brittle, bloated software wrapper that requires const
    The prompt instantly equips the agentic AI with the 9 Core Invariants of the DGX Spark architecture, turning it into a battle-tested system administrator that understands ARM64, GB10 CUDA 13, isolated virtual environments, systemd user daemons, and zero-duplication storage.
 3. **Transparent & Reproducible:**  
    Every action is an atomic, verified shell command or configuration change that you can inspect, audit, and understand.
+4. **Dynamic Discovery over Hardcoded Assumptions:**  
+   The blueprint originates from a verified, physical reference setup on Grace Blackwell GB10 hardware, but the prompt enforces dynamic target-machine discovery (`id -un`, `$HOME`, GPU state, ports) and uses systemd `%h` specifiers so it automatically adapts to any user environment without hardcoded paths.
 
 ---
 
